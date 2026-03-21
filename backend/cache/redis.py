@@ -5,6 +5,7 @@ from typing import Any, Optional
 import redis.asyncio as aioredis
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+CACHE_ENABLED = os.getenv("CACHE_ENABLED", "true").lower() == "true"
 
 # TTLs em segundos conforme especificação do documento
 TTL = {
@@ -30,6 +31,8 @@ async def get_redis() -> aioredis.Redis:
 
 
 async def cache_get(key: str) -> Optional[Any]:
+    if not CACHE_ENABLED:
+        return None
     try:
         client = await get_redis()
         value = await client.get(key)
@@ -41,6 +44,8 @@ async def cache_get(key: str) -> Optional[Any]:
 
 
 async def cache_set(key: str, value: Any, ttl: int) -> None:
+    if not CACHE_ENABLED:
+        return
     try:
         client = await get_redis()
         await client.setex(key, ttl, json.dumps(value))
